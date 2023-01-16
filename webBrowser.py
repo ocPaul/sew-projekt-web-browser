@@ -27,7 +27,7 @@ class WebBrowser(QMainWindow):
 
         self.backButton = QPushButton("<")
         self.backButton.setMaximumSize(35,30)
-        self.backButton.setStyleSheet("border :1px solid green")
+        # self.backButton.setStyleSheet("border :1px solid green")
 
         self.forwardButton = QPushButton(">")
         self.forwardButton.setMaximumSize(35,30)
