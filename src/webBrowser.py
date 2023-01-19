@@ -22,7 +22,7 @@ class WebBrowser(QMainWindow):
         self.urlBar.setMaximumHeight(20)
 
         self.enterButton = QPushButton()
-        self.enterButton.setIcon(QIcon('enter.png'))
+        self.enterButton.setIcon(QIcon('media/enter.png'))
         self.enterButton.setMinimumHeight(20)
 
         self.backButton = QPushButton("<")
