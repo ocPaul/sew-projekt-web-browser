@@ -2,9 +2,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWebEngineWidgets import *
+from PyQt5 import Qt
 import sys
 
-class WebBrowser(QMainWindow):
+class WebBrowser():
 
     def __init__(self, *args, **kwargs):
         super(WebBrowser, self).__init__(*args, **kwargs)
@@ -18,12 +19,16 @@ class WebBrowser(QMainWindow):
         self.vBox = QVBoxLayout()
         self.hBox = QHBoxLayout()
 
-        self.urlBar = QTextEdit()
+        self.urlBar = QLineEdit()
         self.urlBar.setMaximumHeight(20)
 
         self.enterButton = QPushButton()
         self.enterButton.setIcon(QIcon('media/enter.png'))
         self.enterButton.setMinimumHeight(20)
+        self.enterButton.clicked.connect(lambda: self.navigate(self.urlBar.text(), True))
+        
+        enterPressed = QShortcut(QKeySequence("Return"), self.urlBar)
+        enterPressed.activated.connect(lambda: self.navigate(self.urlBar.text(), False))
 
         self.backButton = QPushButton("<")
         self.backButton.setMaximumSize(35,30)
@@ -46,7 +51,12 @@ class WebBrowser(QMainWindow):
         self.mainWindow.setLayout(self.vBox)
         self.mainWindow.show()
 
-        # self.app.exec_()
+    def navigate(self, url, tüt):
+        if self.urlBar.hasFocus() or tüt:
+            if not url.startswith("http://"):
+                url = "http://" + url
+            self.urlBar.setText(url)
+            self.engine.setUrl(QUrl(url))   
 
 
 if __name__ == "__main__":
