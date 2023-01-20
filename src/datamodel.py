@@ -24,9 +24,22 @@ class History(Base):
     title = Column(String)
     dateTime = Column(DateTime)
 
-    def __init__(self, url, title, visit_time, visit_count, duration):
+    def __init__(self, url, title, dateTime):
         self.url = url
         self.title = title
-        self.visit_time = visit_time
-        self.visit_count = visit_count
-        self.duration = duration
+        self.dateTime = dateTime
+
+
+class Config(Base):
+    __tablename__ = 'config'
+
+    id = Column(Integer, primary_key=True)
+    startUrl = Column(String)
+    width = Column(Integer)
+    height = Column(Integer)     
+
+    def __init__(self, startUrl, width, heigth):
+        self.startUrl = startUrl
+        self.width = width
+        self.height = heigth
+           
