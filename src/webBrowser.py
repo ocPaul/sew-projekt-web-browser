@@ -5,6 +5,7 @@ from PyQt5.QtWebEngineWidgets import *
 from databaseControl import *
 import sys
 
+
 class WebBrowser(QWidget):
 
     def __init__(self, *args, **kwargs):
@@ -13,6 +14,7 @@ class WebBrowser(QWidget):
         self.database = DataBaseControl()
         self.checkList = []
         self.check = False
+        self.settings = settingsGUI(self.database)
 
     def closeEvent(self, event):
         event.ignore()
@@ -21,9 +23,9 @@ class WebBrowser(QWidget):
         result = mBox.question(self, "Confirm Exit", "Are you sure you want to exit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if result == QMessageBox.Yes:
             event.accept()
-        
+
     def GUI(self):
-        
+
         # self.mainWindow = QWidget()
         self.setWindowTitle("Westerizz")
 
@@ -84,7 +86,7 @@ class WebBrowser(QWidget):
         self.database.addHistory(url, title)
 
     def navigate(self, url, tüt):
-        self.checkList = ["http://","https://", "https//"]
+        self.checkList = ["http://", "https://", "https//"]
         self.check = False
 
         if url is not "":
@@ -118,12 +120,37 @@ class WebBrowser(QWidget):
             if action.text() == "Exit":
                 self.close()
             if action.text() == "Settings":
-                pass
-    
+                # self.settings = settingsGUI(self.database)
+                self.settings.show()
+
+class settingsGUI(QWidget):
+        
+        def __init__(self, database):
+            super().__init__()
+
+            self.database = database
+            vBox = QVBoxLayout()
+            hBox1= QHBoxLayout()
+
+            self.title = QLabel("Settings:")            
+            self.startUrlLine = QLineEdit(self.database.getStartUrl())
+            self.urlLabel = QLabel("Start Url:")
+            
+            hBox1.addWidget(self.urlLabel)            
+            hBox1.addWidget(self.startUrlLine)
+
+            vBox.addWidget(self.title)
+            vBox.addLayout(hBox1)
+
+            self.setLayout(vBox)
+            # self.setFixedSize()
+        
+        def closeEvent(self, event):
+            self.database.changeStartUrl(self.startUrlLine.text())
+
 
 if __name__ == "__main__":
     app = QApplication([])
     browser = WebBrowser()
     browser.GUI()
-    # browser.show()
     sys.exit(app.exec_())    
