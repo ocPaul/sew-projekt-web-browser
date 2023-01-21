@@ -2,12 +2,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWebEngineWidgets import *
-from PyQt5 import Qt
 from databaseControl import *
 import sys
-import logging
 
-class WebBrowser():
+class WebBrowser(QWidget):
 
     def __init__(self, *args, **kwargs):
         super(WebBrowser, self).__init__(*args, **kwargs)
@@ -15,15 +13,22 @@ class WebBrowser():
         self.database = DataBaseControl()
         self.checkList = []
         self.check = False
-        self.database.changeSize(1200, 200)
+
+    def closeEvent(self, event):
+        event.ignore()
+        self.database.changeSize(self.width(), self.height())
+        mBox = QMessageBox()
+        result = mBox.question(self, "Confirm Exit", "Are you sure you want to exit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if result == QMessageBox.Yes:
+            event.accept()
         
     def GUI(self):
         
-        # self.app = QApplication([])
-        self.mainWindow = QWidget()
-        self.mainWindow.setWindowTitle("Westerizz")
+        # self.mainWindow = QWidget()
+        self.setWindowTitle("Westerizz")
 
-        self.mainWindow.setMinimumSize(self.database.getSize().width, self.database.getSize().height)
+        self.resize(self.database.getSize().width, self.database.getSize().height)
+        print(self.width())
 
         self.vBox = QVBoxLayout()
         self.hBox = QHBoxLayout()
@@ -48,10 +53,14 @@ class WebBrowser():
         self.forwardButton.setMaximumSize(35,30)
         self.forwardButton.clicked.connect(lambda: self.goForward())
 
+        self.menuButton = QPushButton("menu")
+        self.menuButton.clicked.connect(lambda: self.open_menu())
+
         self.hBox.addWidget(self.urlBar)
         self.hBox.addWidget(self.enterButton)
         self.hBox.addWidget(self.backButton)
         self.hBox.addWidget(self.forwardButton)
+        self.hBox.addWidget(self.menuButton)
 
         startUrl = self.database.getStartUrl()
         self.engine = QWebEngineView()
@@ -62,8 +71,11 @@ class WebBrowser():
         self.vBox.addLayout(self.hBox)
         self.vBox.addWidget(self.engine)
 
-        self.mainWindow.setLayout(self.vBox)
-        self.mainWindow.show()
+        self.setLayout(self.vBox)
+        self.show()
+
+    def mainWindow():
+        pass
 
     def currentUrl(self):
         url = self.engine.url().toString(QUrl.RemoveFragment)
@@ -95,13 +107,23 @@ class WebBrowser():
     def goForward(self):
         self.engine.forward()
 
+    def open_menu(self):
+        menu = QMenu(self)
+        menu.addAction("Settings")
+        # menu.addAction("Option 2")
+        menu.addSeparator()
+        menu.addAction("Exit")
+        action = menu.exec_(QCursor.pos())
+        if action:
+            if action.text() == "Exit":
+                self.close()
+            if action.text() == "Settings":
+                pass
+    
 
 if __name__ == "__main__":
     app = QApplication([])
     browser = WebBrowser()
     browser.GUI()
-    sys.exit(app.exec_())
-
-
-
-        
+    # browser.show()
+    sys.exit(app.exec_())    
