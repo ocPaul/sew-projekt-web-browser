@@ -14,7 +14,7 @@ class WebBrowser(QWidget):
         self.database = DataBaseControl()
         self.checkList = []
         self.check = False
-        self.settings = settingsGUI(self.database)
+        # self.settings = settingsGUI(self.database)
 
     def closeEvent(self, event):
         event.ignore()
@@ -24,13 +24,12 @@ class WebBrowser(QWidget):
         if result == QMessageBox.Yes:
             event.accept()
 
-    def GUI(self):
+    def mainWindow(self):
 
         # self.mainWindow = QWidget()
         self.setWindowTitle("Westerizz")
-
         self.resize(self.database.getSize().width, self.database.getSize().height)
-        print(self.width())
+        # print(self.width())
 
         self.vBox = QVBoxLayout()
         self.hBox = QHBoxLayout()
@@ -56,7 +55,7 @@ class WebBrowser(QWidget):
         self.forwardButton.clicked.connect(lambda: self.goForward())
 
         self.menuButton = QPushButton("menu")
-        self.menuButton.clicked.connect(lambda: self.open_menu())
+        self.menuButton.clicked.connect(lambda: self.openMenu())
 
         self.hBox.addWidget(self.urlBar)
         self.hBox.addWidget(self.enterButton)
@@ -75,9 +74,6 @@ class WebBrowser(QWidget):
 
         self.setLayout(self.vBox)
         self.show()
-
-    def mainWindow():
-        pass
 
     def currentUrl(self):
         url = self.engine.url().toString(QUrl.RemoveFragment)
@@ -109,10 +105,10 @@ class WebBrowser(QWidget):
     def goForward(self):
         self.engine.forward()
 
-    def open_menu(self):
+    def openMenu(self):
         menu = QMenu(self)
         menu.addAction("Settings")
-        # menu.addAction("Option 2")
+        menu.addAction("Add Bookmark")
         menu.addSeparator()
         menu.addAction("Exit")
         action = menu.exec_(QCursor.pos())
@@ -120,8 +116,11 @@ class WebBrowser(QWidget):
             if action.text() == "Exit":
                 self.close()
             if action.text() == "Settings":
-                # self.settings = settingsGUI(self.database)
+                self.settings = settingsGUI(self.database)
                 self.settings.show()
+            if action.text() == "Add Bookmark":
+                self.bookmarks = bookmarkGUI(self.database, self.engine)
+                self.bookmarks.show()
 
 class settingsGUI(QWidget):
         
@@ -148,9 +147,68 @@ class settingsGUI(QWidget):
         def closeEvent(self, event):
             self.database.changeStartUrl(self.startUrlLine.text())
 
+class bookmarkGUI(QWidget):
+        
+        def __init__(self, database, engine):
+            super().__init__()
+
+            self.engine = engine
+            self.database = database
+
+            vBox = QVBoxLayout()
+            hBox1 = QHBoxLayout()
+            hBox2 = QHBoxLayout()
+            hBox3 = QHBoxLayout()
+            hBox4 = QHBoxLayout()
+
+            self.title = QLabel("Add Bookmark:")
+
+            self.url = QLineEdit(self.engine.url().toString(QUrl.RemoveFragment))
+            self.urlLabel = QLabel("Url:")
+            
+            self.pageTitle = QLineEdit(self.engine.title())
+            self.pageTitleLabel = QLabel("Title:")
+            
+            self.desc = QLineEdit("")
+            self.descLabel = QLabel("Description:")
+
+            self.tags = QLineEdit("")
+            self.tagsLabel = QLabel("tags:")
+            
+            self.saveButton = QPushButton("save")
+            self.saveButton.clicked.connect(lambda: self.saveData())
+            
+            hBox1.addWidget(self.urlLabel)            
+            hBox1.addWidget(self.url)
+
+            hBox2.addWidget(self.pageTitleLabel)
+            hBox2.addWidget(self.pageTitle)
+
+            hBox3.addWidget(self.descLabel)
+            hBox3.addWidget(self.desc)
+
+            hBox4.addWidget(self.tagsLabel)
+            hBox4.addWidget(self.tags)
+
+            vBox.addWidget(self.title)
+            vBox.addLayout(hBox1)
+            vBox.addLayout(hBox2)
+            vBox.addLayout(hBox3)
+            vBox.addLayout(hBox4)
+            vBox.addWidget(self.saveButton)
+
+            self.setLayout(vBox)
+
+        def saveData(self):
+            self.database.addBookmark(self.url.text(), self.pageTitle.text(), self.desc.text(), self.tags.text())
+            self.close()
+        
+        # def closeEvent(self, event):
+        #     self.database.changeStartUrl(self.url.text())
+
 
 if __name__ == "__main__":
     app = QApplication([])
     browser = WebBrowser()
-    browser.GUI()
+    browser.mainWindow()
     sys.exit(app.exec_())    
