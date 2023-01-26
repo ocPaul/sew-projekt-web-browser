@@ -5,6 +5,16 @@ from PyQt5.QtWebEngineWidgets import *
 from databaseControl import *
 import sys
 
+StyleStr = """
+            background-color: #4f3f5e;
+            border-style: outset;
+            border-width: 1px;
+            border-radius: 5px;
+            border-color: beige;
+            font: bold 14px;
+            min-width: 4em;
+            padding: 6px;"""
+
 
 class WebBrowser(QWidget):
 
@@ -14,7 +24,7 @@ class WebBrowser(QWidget):
         self.database = DataBaseControl()
         self.checkList = []
         self.check = False
-        # self.settings = settingsGUI(self.database)
+        self.styleString = StyleStr
 
     def closeEvent(self, event):
         event.ignore()
@@ -26,35 +36,36 @@ class WebBrowser(QWidget):
 
     def mainWindow(self):
 
-        # self.mainWindow = QWidget()
         self.setWindowTitle("Westerizz")
         self.resize(self.database.getSize().width, self.database.getSize().height)
-        # print(self.width())
+        self.setStyleSheet("color: white;  background-color: #4f3f5e")
 
         self.vBox = QVBoxLayout()
         self.hBox = QHBoxLayout()
 
-        self.urlBar = QLineEdit()
-        self.urlBar.setMaximumHeight(20)
+        self.urlBar = UrlBarQLineEdit(self.styleString)
+        self.urlBar.setMaximumHeight(40)
 
-        self.enterButton = QPushButton()
-        self.enterButton.setIcon(QIcon('media/enter.png'))
+        self.enterButton = GPushButton("", self.styleString + "border: none;")
+        # self.enterButton.style().setProperty("color", "red")
+        self.enterButton.setIcon(QIcon('media/rocket1.png'))
+        self.enterButton.setIconSize(QSize(50,40))
         self.enterButton.setMinimumHeight(20)
         self.enterButton.clicked.connect(lambda: self.navigate(self.urlBar.text(), True))
         
         enterPressed = QShortcut(QKeySequence("Return"), self.urlBar)
         enterPressed.activated.connect(lambda: self.navigate(self.urlBar.text(), False))
 
-        self.backButton = QPushButton("<")
-        self.backButton.setMaximumSize(35,30)
+        self.backButton = GPushButton("<", self.styleString)
+        # self.backButton.setMaximumSize(35,30)
         self.backButton.clicked.connect(lambda: self.goBack())
         # self.backButton.setStyleSheet("border :1px solid green")
 
-        self.forwardButton = QPushButton(">")
-        self.forwardButton.setMaximumSize(35,30)
+        self.forwardButton = GPushButton(">", self.styleString)
+        # self.forwardButton.setMaximumSize(35,30)
         self.forwardButton.clicked.connect(lambda: self.goForward())
 
-        self.menuButton = QPushButton("menu")
+        self.menuButton = GPushButton("menu", self.styleString)
         self.menuButton.clicked.connect(lambda: self.openMenu())
 
         self.hBox.addWidget(self.urlBar)
@@ -77,6 +88,7 @@ class WebBrowser(QWidget):
 
     def currentUrl(self):
         url = self.engine.url().toString(QUrl.RemoveFragment)
+        url = self.checkForTag(url)
         title = self.engine.title()
         self.urlBar.setText(url)
         self.database.addHistory(url, title)
@@ -98,7 +110,10 @@ class WebBrowser(QWidget):
 
     def changeStartUrl():
         pass
-    
+
+    def checkForTag(self, url):
+        pass
+
     def goBack(self):
         self.engine.back()
 
@@ -107,6 +122,7 @@ class WebBrowser(QWidget):
 
     def openMenu(self):
         menu = QMenu(self)
+        menu.styleSheet()
         menu.addAction("Settings")
         menu.addAction("Add Bookmark")
         menu.addSeparator()
@@ -122,12 +138,81 @@ class WebBrowser(QWidget):
                 self.bookmarks = bookmarkGUI(self.database, self.engine)
                 self.bookmarks.show()
 
+class GPushButton(QPushButton):
+    
+    def __init__(self, text, styleString, *args, **kwargs):
+        super(GPushButton, self).__init__(*args, **kwargs)
+        self.styleString = styleString
+        self.setStyleSheet(self.styleString)
+        self.setFixedHeight(40)
+        self.setText(text)
+
+    def enterEvent(self, event):
+        self.setStyleSheet(
+            """ background-color: #655178;
+            border-style: outset;
+            border-width: 1px;
+            border-radius: 5px;
+            border-color: beige;
+            font: bold 14px;
+            min-width: 4em;
+            padding: 6px;""")
+        
+    def leaveEvent(self, event):
+        self.setStyleSheet(self.styleString)
+
+class UrlBarQLineEdit(QLineEdit):
+    
+    def __init__(self, styleString,*args, **kwargs):
+        super(UrlBarQLineEdit, self).__init__(*args, **kwargs)
+        self.styleString = styleString
+        self.setStyleSheet(self.styleString)
+        self.focus = False
+
+    def focusInEvent(self, event):
+        self.focus = True
+        self.selectAll()
+        self.setStyleSheet(
+            """ background-color: #9685a8;
+            border-style: outset;
+            border-width: 1px;
+            border-radius: 5px;
+            border-color: beige;
+            font: bold 14px;
+            min-width: 4em;
+            padding: 6px;""")
+
+    def focusOutEvent(self, event):
+        self.deselect()
+        self.focus = False
+        self.setStyleSheet(self.styleString)
+
+    def enterEvent(self, event):
+        if self.focus == False:
+            self.setStyleSheet(
+                """ background-color: #6e627a;
+                border-style: outset;
+                border-width: 1px;
+                border-radius: 5px;
+                border-color: beige;
+                font: bold 14px;
+                min-width: 4em;
+                padding: 6px;""")
+        
+    def leaveEvent(self, event):
+        if self.focus == False:
+            self.setStyleSheet(self.styleString)
+
 class settingsGUI(QWidget):
         
         def __init__(self, database):
             super().__init__()
 
             self.database = database
+
+            self.setWindowTitle("Settings")
+            self.resize(300, 50)
+
             vBox = QVBoxLayout()
             hBox1= QHBoxLayout()
 
@@ -142,7 +227,6 @@ class settingsGUI(QWidget):
             vBox.addLayout(hBox1)
 
             self.setLayout(vBox)
-            # self.setFixedSize()
         
         def closeEvent(self, event):
             self.database.changeStartUrl(self.startUrlLine.text())
@@ -154,6 +238,9 @@ class bookmarkGUI(QWidget):
 
             self.engine = engine
             self.database = database
+
+            self.setWindowTitle("Add Bookmark")
+            # self.setWindowIcon("C:\Users\pauls\Documents\repos\sew-projekt-web-browser-1\media\bookmarkIco.png")
 
             vBox = QVBoxLayout()
             hBox1 = QHBoxLayout()
@@ -203,9 +290,6 @@ class bookmarkGUI(QWidget):
             self.database.addBookmark(self.url.text(), self.pageTitle.text(), self.desc.text(), self.tags.text())
             self.close()
         
-        # def closeEvent(self, event):
-        #     self.database.changeStartUrl(self.url.text())
-
 
 if __name__ == "__main__":
     app = QApplication([])
