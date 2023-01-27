@@ -5,6 +5,8 @@ from PyQt5.QtWebEngineWidgets import *
 from databaseControl import *
 import sys
 
+"""https://doc.qt.io/qtforpython/PySide6/QtWidgets/QLineEdit.html?highlight=qlineedit"""
+
 StyleStr = """
             background-color: #4f3f5e;
             border-style: outset;
@@ -25,6 +27,7 @@ class WebBrowser(QWidget):
         self.checkList = []
         self.check = False
         self.styleString = StyleStr
+        self.startUrl = self.database.getStartUrl()
 
     def closeEvent(self, event):
         event.ignore()
@@ -51,19 +54,16 @@ class WebBrowser(QWidget):
         self.enterButton.setIcon(QIcon('media/rocket1.png'))
         self.enterButton.setIconSize(QSize(50,40))
         self.enterButton.setMinimumHeight(20)
-        self.enterButton.clicked.connect(lambda: self.navigate(self.urlBar.text(), True))
+        self.enterButton.clicked.connect(lambda: self.engine.navigate(self.urlBar.text(), True))
         
         enterPressed = QShortcut(QKeySequence("Return"), self.urlBar)
-        enterPressed.activated.connect(lambda: self.navigate(self.urlBar.text(), False))
+        enterPressed.activated.connect(lambda: self.engine.navigate(self.urlBar.text(), False))
 
         self.backButton = GPushButton("<", self.styleString)
-        # self.backButton.setMaximumSize(35,30)
         self.backButton.clicked.connect(lambda: self.goBack())
-        # self.backButton.setStyleSheet("border :1px solid green")
 
         self.forwardButton = GPushButton(">", self.styleString)
-        # self.forwardButton.setMaximumSize(35,30)
-        self.forwardButton.clicked.connect(lambda: self.goForward())
+        self.forwardButton.clicked.connect(lambda: self.engine.goForward())
 
         self.menuButton = GPushButton("menu", self.styleString)
         self.menuButton.clicked.connect(lambda: self.openMenu())
@@ -74,11 +74,11 @@ class WebBrowser(QWidget):
         self.hBox.addWidget(self.forwardButton)
         self.hBox.addWidget(self.menuButton)
 
-        startUrl = self.database.getStartUrl()
-        self.engine = QWebEngineView()
-        self.engine.setUrl(QUrl(startUrl))
-        self.urlBar.setText(startUrl)
-        self.engine.loadFinished.connect(self.currentUrl)
+
+        self.engine = engine(self.database, self.urlBar)
+        self.engine.navigate(self.startUrl, True)
+        self.urlBar.setText(self.startUrl)
+        self.engine.loadFinished.connect(self.engine.currentUrl)
 
         self.vBox.addLayout(self.hBox)
         self.vBox.addWidget(self.engine)
@@ -88,31 +88,9 @@ class WebBrowser(QWidget):
 
     def currentUrl(self):
         url = self.engine.url().toString(QUrl.RemoveFragment)
-        url = self.checkForTag(url)
         title = self.engine.title()
         self.urlBar.setText(url)
         self.database.addHistory(url, title)
-
-    def navigate(self, url, tüt):
-        self.checkList = ["http://", "https://", "https//"]
-        self.check = False
-
-        if url is not "":
-            if self.urlBar.hasFocus() or tüt:
-                for i in self.checkList:
-                    if url.startswith(i):
-                        self.check = True
-                        
-                if not self.check:
-                    url = "http://" + url
-                self.urlBar.setText(url)
-                self.engine.setUrl(QUrl(url))
-
-    def changeStartUrl():
-        pass
-
-    def checkForTag(self, url):
-        pass
 
     def goBack(self):
         self.engine.back()
@@ -125,6 +103,7 @@ class WebBrowser(QWidget):
         menu.styleSheet()
         menu.addAction("Settings")
         menu.addAction("Add Bookmark")
+        menu.addAction("Bookmarks")
         menu.addSeparator()
         menu.addAction("Exit")
         action = menu.exec_(QCursor.pos())
@@ -135,8 +114,45 @@ class WebBrowser(QWidget):
                 self.settings = settingsGUI(self.database)
                 self.settings.show()
             if action.text() == "Add Bookmark":
-                self.bookmarks = bookmarkGUI(self.database, self.engine)
+                self.addBookmark = saveBookmarkGUI(self.database, self.engine)
+                self.addBookmark.show()
+            if action.text() == "Bookmarks":
+                self.bookmarks = listBookmarkGUI(self.database, self.engine)
                 self.bookmarks.show()
+
+class engine(QWebEngineView):
+    def __init__(self, database, urlBar, *args, **kwargs):
+        super(engine, self).__init__(*args, **kwargs)
+
+        self.database = database
+        self.urlBar = urlBar
+
+    def navigate(self, url, tüt):
+        self.checkList = ["http://", "https://", "https//"]
+        self.check = False
+        checkedUrl = self.database.getBookmarkTag(url)
+
+        if checkedUrl != "":
+            if self.urlBar.hasFocus() or tüt:
+                for i in self.checkList:
+                    if checkedUrl.startswith(i):
+                        self.check = True      
+                if not self.check:
+                    checkedUrl = "http://" + checkedUrl
+                self.urlBar.setText(checkedUrl)
+                self.setUrl(QUrl(checkedUrl))
+
+    def goBack(self):
+        self.back()
+
+    def goForward(self):
+        self.forward()
+    
+    def currentUrl(self):
+        url = self.url().toString(QUrl.RemoveFragment)
+        title = self.title()
+        self.urlBar.setText(url)
+        self.database.addHistory(url, title)
 
 class GPushButton(QPushButton):
     
@@ -214,26 +230,27 @@ class settingsGUI(QWidget):
             self.resize(300, 50)
 
             vBox = QVBoxLayout()
-            hBox1= QHBoxLayout()
+            hBox= QHBoxLayout()
 
             self.title = QLabel("Settings:")            
             self.startUrlLine = QLineEdit(self.database.getStartUrl())
             self.urlLabel = QLabel("Start Url:")
             
-            hBox1.addWidget(self.urlLabel)            
-            hBox1.addWidget(self.startUrlLine)
+            hBox.addWidget(self.urlLabel)            
+            hBox.addWidget(self.startUrlLine)
 
             vBox.addWidget(self.title)
-            vBox.addLayout(hBox1)
+            vBox.addLayout(hBox)
 
             self.setLayout(vBox)
         
         def closeEvent(self, event):
             self.database.changeStartUrl(self.startUrlLine.text())
 
-class bookmarkGUI(QWidget):
+class saveBookmarkGUI(QWidget):
         
         def __init__(self, database, engine):
+
             super().__init__()
 
             self.engine = engine
@@ -259,8 +276,8 @@ class bookmarkGUI(QWidget):
             self.desc = QLineEdit("")
             self.descLabel = QLabel("Description:")
 
-            self.tags = QLineEdit("")
-            self.tagsLabel = QLabel("tags:")
+            self.tag = QLineEdit("")
+            self.tagsLabel = QLabel("tag:")
             
             self.saveButton = QPushButton("save")
             self.saveButton.clicked.connect(lambda: self.saveData())
@@ -275,7 +292,7 @@ class bookmarkGUI(QWidget):
             hBox3.addWidget(self.desc)
 
             hBox4.addWidget(self.tagsLabel)
-            hBox4.addWidget(self.tags)
+            hBox4.addWidget(self.tag)
 
             vBox.addWidget(self.title)
             vBox.addLayout(hBox1)
@@ -287,9 +304,60 @@ class bookmarkGUI(QWidget):
             self.setLayout(vBox)
 
         def saveData(self):
-            self.database.addBookmark(self.url.text(), self.pageTitle.text(), self.desc.text(), self.tags.text())
+            self.database.addBookmark(self.url.text(), self.pageTitle.text(), self.desc.text(), self.tag.text())
             self.close()
+
+class listBookmarkGUI(QWidget):
+    def __init__(self, database, engine,*args, **kwargs):
+        super(listBookmarkGUI, self).__init__(*args, **kwargs)
         
+        self.engine = engine
+        self.database = database
+        self.bookmarks = database.getBookmarks()
+
+        self.setWindowTitle("Bookmarks")
+
+        vBox = QVBoxLayout()
+
+        for i in range(len(self.bookmarks)):
+            urlLine = bookMarkGuiButtons(self.bookmarks[i].url, self.engine, self.bookmarks[i].url)
+            titleLine = bookMarkGuiButtons(self.bookmarks[i].title, self.engine, self.bookmarks[i].url)
+            descriptionLine = bookMarkGuiButtons(self.bookmarks[i].description, self.engine, self.bookmarks[i].url)
+            tagLine = bookMarkGuiButtons(self.bookmarks[i].tag, self.engine, self.bookmarks[i].url)
+
+            hBox= QHBoxLayout()
+            hBox.addWidget(urlLine)
+            hBox.addWidget(titleLine)
+            hBox.addWidget(descriptionLine)
+            hBox.addWidget(tagLine)
+
+            vBox.addLayout(hBox)
+
+        self.setLayout(vBox)
+
+class bookMarkGuiButtons(QLineEdit):
+    
+    def __init__(self, input, engine, url, *args, **kwargs):
+        super(bookMarkGuiButtons, self).__init__(*args, **kwargs)
+        self.url = url
+        self.input = input
+        self.engine = engine
+        self.setText(self.input)
+        self.setReadOnly(True)
+
+    def focusInEvent(self, event):
+        event.ignore
+        self.engine.navigate(self.url, True)
+
+    def mousePressEvent(self, event):
+        if event.type() == QEvent.MouseButtonDblClick and event.button() == Qt.LeftButton:
+            print("blibla")
+            self.selectAll()
+            self.setReadOnly(False)
+        super().mousePressEvent(event)
+
+    
+
 
 if __name__ == "__main__":
     app = QApplication([])
