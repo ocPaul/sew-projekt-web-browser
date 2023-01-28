@@ -1,11 +1,16 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWebEngineWidgets import *
-from databaseControl import *
 import sys
 
-"""https://doc.qt.io/qtforpython/PySide6/QtWidgets/QLineEdit.html?highlight=qlineedit"""
+from PyQt5 import Qt
+from PyQt5.QtCore import QEvent, QSize, QUrl
+from PyQt5.QtGui import QCursor, QIcon, QKeySequence
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit,
+                             QMenu, QMessageBox, QPushButton, QShortcut,
+                             QVBoxLayout, QWidget)
+
+from databaseControl import DataBaseControl
+
+# https://doc.qt.io/qtforpython/PySide6/QtWidgets/QLineEdit.html?highlight=qlineedit
 
 StyleStr = """
             background-color: #4f3f5e;
@@ -14,6 +19,7 @@ StyleStr = """
             border-radius: 5px;
             border-color: beige;
             font: bold 14px;
+            color: white;
             min-width: 4em;
             padding: 6px;"""
 
@@ -31,16 +37,21 @@ class WebBrowser(QWidget):
 
     def closeEvent(self, event):
         event.ignore()
-        self.database.changeSize(self.width(), self.height())
+        self.database.changeSize(self.width(), self.height(),
+                                 self.isFullScreen())
         mBox = QMessageBox()
-        result = mBox.question(self, "Confirm Exit", "Are you sure you want to exit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        result = mBox.question(self, "Confirm Exit",
+                               "Are you sure you want to exit?",
+                               QMessageBox.Yes | QMessageBox.No,
+                               QMessageBox.No)
         if result == QMessageBox.Yes:
             event.accept()
 
     def mainWindow(self):
 
         self.setWindowTitle("Westerizz")
-        self.resize(self.database.getSize().width, self.database.getSize().height)
+        self.resize(self.database.getSize().width,
+                    self.database.getSize().height)
         self.setStyleSheet("color: white;  background-color: #4f3f5e")
 
         self.vBox = QVBoxLayout()
@@ -52,12 +63,14 @@ class WebBrowser(QWidget):
         self.enterButton = GPushButton("", self.styleString + "border: none;")
         # self.enterButton.style().setProperty("color", "red")
         self.enterButton.setIcon(QIcon('media/rocket1.png'))
-        self.enterButton.setIconSize(QSize(50,40))
+        self.enterButton.setIconSize(QSize(50, 40))
         self.enterButton.setMinimumHeight(20)
-        self.enterButton.clicked.connect(lambda: self.engine1.navigate(self.urlBar.text(), True))
-        
+        self.enterButton.clicked.connect(lambda: self.engine1.navigate(
+                                         self.urlBar.text(), True))
+
         enterPressed = QShortcut(QKeySequence("Return"), self.urlBar)
-        enterPressed.activated.connect(lambda: self.engine1.navigate(self.urlBar.text(), False))
+        enterPressed.activated.connect(lambda: self.engine1.navigate(
+                                       self.urlBar.text(), False))
 
         self.backButton = GPushButton("<", self.styleString)
         self.backButton.clicked.connect(lambda: self.goBack())
@@ -73,7 +86,6 @@ class WebBrowser(QWidget):
         self.hBox.addWidget(self.backButton)
         self.hBox.addWidget(self.forwardButton)
         self.hBox.addWidget(self.menuButton)
-
 
         self.engine1 = engine(self.database, self.urlBar)
         self.engine1.navigate(self.startUrl, True)
@@ -117,8 +129,10 @@ class WebBrowser(QWidget):
                 self.addBookmark = saveBookmarkGUI(self.database, self.engine1)
                 self.addBookmark.show()
             if action.text() == "Bookmarks":
-                self.bookmarks = listBookmarkGUI(self.database, self.engine1)
+                self.bookmarks = listBookmarkGUI(self.database, self.engine1,
+                                                 self.styleString)
                 self.bookmarks.show()
+
 
 class engine(QWebEngineView):
     def __init__(self, database, urlBar, *args, **kwargs):
@@ -136,7 +150,7 @@ class engine(QWebEngineView):
             if self.urlBar.hasFocus() or tüt:
                 for i in self.checkList:
                     if checkedUrl.startswith(i):
-                        self.check = True      
+                        self.check = True
                 if not self.check:
                     checkedUrl = "http://" + checkedUrl
                 self.urlBar.setText(checkedUrl)
@@ -147,15 +161,16 @@ class engine(QWebEngineView):
 
     def goForward(self):
         self.forward()
-    
+
     def currentUrl(self):
         url = self.url().toString(QUrl.RemoveFragment)
         title = self.title()
         self.urlBar.setText(url)
         self.database.addHistory(url, title)
 
+
 class GPushButton(QPushButton):
-    
+
     def __init__(self, text, styleString, *args, **kwargs):
         super(GPushButton, self).__init__(*args, **kwargs)
         self.styleString = styleString
@@ -173,13 +188,14 @@ class GPushButton(QPushButton):
             font: bold 14px;
             min-width: 4em;
             padding: 6px;""")
-        
+
     def leaveEvent(self, event):
         self.setStyleSheet(self.styleString)
 
+
 class UrlBarQLineEdit(QLineEdit):
-    
-    def __init__(self, styleString,*args, **kwargs):
+
+    def __init__(self, styleString, *args, **kwargs):
         super(UrlBarQLineEdit, self).__init__(*args, **kwargs)
         self.styleString = styleString
         self.setStyleSheet(self.styleString)
@@ -203,7 +219,7 @@ class UrlBarQLineEdit(QLineEdit):
         self.setStyleSheet(self.styleString)
 
     def enterEvent(self, event):
-        if self.focus == False:
+        if self.focus is False:
             self.setStyleSheet(
                 """ background-color: #6e627a;
                 border-style: outset;
@@ -213,103 +229,108 @@ class UrlBarQLineEdit(QLineEdit):
                 font: bold 14px;
                 min-width: 4em;
                 padding: 6px;""")
-        
+
     def leaveEvent(self, event):
-        if self.focus == False:
+        if self.focus is False:
             self.setStyleSheet(self.styleString)
 
+
 class settingsGUI(QWidget):
-        
-        def __init__(self, database):
-            super().__init__()
 
-            self.database = database
+    def __init__(self, database):
+        super().__init__()
 
-            self.setWindowTitle("Settings")
-            self.resize(300, 50)
+        self.database = database
 
-            vBox = QVBoxLayout()
-            hBox= QHBoxLayout()
+        self.setWindowTitle("Settings")
+        self.resize(300, 50)
 
-            self.title = QLabel("Settings:")            
-            self.startUrlLine = QLineEdit(self.database.getStartUrl())
-            self.urlLabel = QLabel("Start Url:")
-            
-            hBox.addWidget(self.urlLabel)            
-            hBox.addWidget(self.startUrlLine)
+        vBox = QVBoxLayout()
+        hBox = QHBoxLayout()
 
-            vBox.addWidget(self.title)
-            vBox.addLayout(hBox)
+        self.title = QLabel("Settings:")
+        self.startUrlLine = QLineEdit(self.database.getStartUrl())
+        self.urlLabel = QLabel("Start Url:")
 
-            self.setLayout(vBox)
-        
-        def closeEvent(self, event):
-            self.database.changeStartUrl(self.startUrlLine.text())
+        hBox.addWidget(self.urlLabel)
+        hBox.addWidget(self.startUrlLine)
+
+        vBox.addWidget(self.title)
+        vBox.addLayout(hBox)
+
+        self.setLayout(vBox)
+
+    def closeEvent(self, event):
+        self.database.changeStartUrl(self.startUrlLine.text())
+
 
 class saveBookmarkGUI(QWidget):
-        
-        def __init__(self, database, engine):
 
-            super().__init__()
+    def __init__(self, database, engine):
+        super().__init__()
 
-            self.engine = engine
-            self.database = database
+        self.engine = engine
+        self.database = database
 
-            self.setWindowTitle("Add Bookmark")
-            # self.setWindowIcon("C:\Users\pauls\Documents\repos\sew-projekt-web-browser-1\media\bookmarkIco.png")
+        self.setWindowTitle("Add Bookmark")
+        # self.setWindowIcon("C:\Users\pauls\Documents\repos\sew-projekt-web-browser-1\media\bookmarkIco.png")
 
-            vBox = QVBoxLayout()
-            hBox1 = QHBoxLayout()
-            hBox2 = QHBoxLayout()
-            hBox3 = QHBoxLayout()
-            hBox4 = QHBoxLayout()
+        vBox = QVBoxLayout()
+        hBox1 = QHBoxLayout()
+        hBox2 = QHBoxLayout()
+        hBox3 = QHBoxLayout()
+        hBox4 = QHBoxLayout()
 
-            self.title = QLabel("Add Bookmark:")
+        self.title = QLabel("Add Bookmark:")
 
-            self.url = QLineEdit(self.engine.url().toString(QUrl.RemoveFragment))
-            self.urlLabel = QLabel("Url:")
-            
-            self.pageTitle = QLineEdit(self.engine.title())
-            self.pageTitleLabel = QLabel("Title:")
-            
-            self.desc = QLineEdit("")
-            self.descLabel = QLabel("Description:")
+        self.url = QLineEdit(self.engine.url().toString(QUrl.RemoveFragment))
+        self.urlLabel = QLabel("Url:")
 
-            self.tag = QLineEdit("")
-            self.tagsLabel = QLabel("tag:")
-            
-            self.saveButton = QPushButton("save")
-            self.saveButton.clicked.connect(lambda: self.saveData())
-            
-            hBox1.addWidget(self.urlLabel)            
-            hBox1.addWidget(self.url)
+        self.pageTitle = QLineEdit(self.engine.title())
+        self.pageTitleLabel = QLabel("Title:")
 
-            hBox2.addWidget(self.pageTitleLabel)
-            hBox2.addWidget(self.pageTitle)
+        self.desc = QLineEdit("")
+        self.descLabel = QLabel("Description:")
 
-            hBox3.addWidget(self.descLabel)
-            hBox3.addWidget(self.desc)
+        self.tag = QLineEdit("")
+        self.tagsLabel = QLabel("tag:")
 
-            hBox4.addWidget(self.tagsLabel)
-            hBox4.addWidget(self.tag)
+        self.saveButton = QPushButton("save")
+        self.saveButton.clicked.connect(lambda: self.saveData())
 
-            vBox.addWidget(self.title)
-            vBox.addLayout(hBox1)
-            vBox.addLayout(hBox2)
-            vBox.addLayout(hBox3)
-            vBox.addLayout(hBox4)
-            vBox.addWidget(self.saveButton)
+        hBox1.addWidget(self.urlLabel)
+        hBox1.addWidget(self.url)
 
-            self.setLayout(vBox)
+        hBox2.addWidget(self.pageTitleLabel)
+        hBox2.addWidget(self.pageTitle)
 
-        def saveData(self):
-            self.database.addBookmark(self.url.text(), self.pageTitle.text(), self.desc.text(), self.tag.text())
-            self.close()
+        hBox3.addWidget(self.descLabel)
+        hBox3.addWidget(self.desc)
+
+        hBox4.addWidget(self.tagsLabel)
+        hBox4.addWidget(self.tag)
+
+        vBox.addWidget(self.title)
+        vBox.addLayout(hBox1)
+        vBox.addLayout(hBox2)
+        vBox.addLayout(hBox3)
+        vBox.addLayout(hBox4)
+        vBox.addWidget(self.saveButton)
+
+        self.setLayout(vBox)
+
+    def saveData(self):
+        self.database.addBookmark(self.url.text(), self.pageTitle.text(),
+                                  self.desc.text(), self.tag.text())
+        self.close()
+
 
 class listBookmarkGUI(QWidget):
-    def __init__(self, database, engine,*args, **kwargs):
+    def __init__(self, database, engine, styleString, *args, **kwargs):
         super(listBookmarkGUI, self).__init__(*args, **kwargs)
-        
+        self.styleString = styleString
+        self.setStyleSheet(styleString)
+
         self.engine = engine
         self.database = database
         self.bookmarks = database.getBookmarks()
@@ -319,24 +340,35 @@ class listBookmarkGUI(QWidget):
         vBox = QVBoxLayout()
 
         for i in range(len(self.bookmarks)):
-            urlLine = bookMarkGuiButtons(self.bookmarks[i].url, self.engine, self.bookmarks[i].url)
-            titleLine = bookMarkGuiButtons(self.bookmarks[i].title, self.engine, self.bookmarks[i].url)
-            descriptionLine = bookMarkGuiButtons(self.bookmarks[i].description, self.engine, self.bookmarks[i].url)
-            tagLine = bookMarkGuiButtons(self.bookmarks[i].tag, self.engine, self.bookmarks[i].url)
+            urlLine = bookMarkGuiButtons(self.bookmarks[i].url, self.engine,
+                                         self.bookmarks[i].url,
+                                         self.styleString)
+            titleLine = bookMarkGuiButtons(self.bookmarks[i].title,
+                                           self.engine,
+                                           self.bookmarks[i].url,
+                                           self.styleString)
+            descriptionLine = bookMarkGuiButtons(self.bookmarks[i].description,
+                                                 self.engine,
+                                                 self.bookmarks[i].url,
+                                                 self.styleString)
+            tagLine = bookMarkGuiButtons(self.bookmarks[i].tag, self.engine,
+                                         self.bookmarks[i].url,
+                                         self.styleString)
 
-            hBox= QHBoxLayout()
+            hBox = QHBoxLayout()
             hBox.addWidget(urlLine)
             hBox.addWidget(titleLine)
             hBox.addWidget(descriptionLine)
             hBox.addWidget(tagLine)
 
             vBox.addLayout(hBox)
-
+        vBox.setSpacing(0)
         self.setLayout(vBox)
 
+
 class bookMarkGuiButtons(QLineEdit):
-    
-    def __init__(self, input, engine, url, *args, **kwargs):
+
+    def __init__(self, input, engine, url, styleString, *args, **kwargs):
         super(bookMarkGuiButtons, self).__init__(*args, **kwargs)
         self.url = url
         self.input = input
@@ -344,6 +376,8 @@ class bookMarkGuiButtons(QLineEdit):
         self.setText(self.input)
         self.setReadOnly(True)
         self.first = False
+        self.styleString = styleString
+        self.setStyleSheet(self.styleString)
 
     def focusInEvent(self, event):
         event.ignore
@@ -352,17 +386,16 @@ class bookMarkGuiButtons(QLineEdit):
         self.first = True
 
     def mousePressEvent(self, event):
-        if event.type() == QEvent.MouseButtonDblClick and event.button() == Qt.LeftButton:
+        if (event.type() == QEvent.MouseButtonDblClick
+           and event.button() == Qt.LeftButton):
             print("blibla")
             self.selectAll()
             self.setReadOnly(False)
         super().mousePressEvent(event)
-
-    
 
 
 if __name__ == "__main__":
     app = QApplication([])
     browser = WebBrowser()
     browser.mainWindow()
-    sys.exit(app.exec_())    
+    sys.exit(app.exec_())
