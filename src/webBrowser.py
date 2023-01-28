@@ -54,16 +54,16 @@ class WebBrowser(QWidget):
         self.enterButton.setIcon(QIcon('media/rocket1.png'))
         self.enterButton.setIconSize(QSize(50,40))
         self.enterButton.setMinimumHeight(20)
-        self.enterButton.clicked.connect(lambda: self.engine.navigate(self.urlBar.text(), True))
+        self.enterButton.clicked.connect(lambda: self.engine1.navigate(self.urlBar.text(), True))
         
         enterPressed = QShortcut(QKeySequence("Return"), self.urlBar)
-        enterPressed.activated.connect(lambda: self.engine.navigate(self.urlBar.text(), False))
+        enterPressed.activated.connect(lambda: self.engine1.navigate(self.urlBar.text(), False))
 
         self.backButton = GPushButton("<", self.styleString)
         self.backButton.clicked.connect(lambda: self.goBack())
 
         self.forwardButton = GPushButton(">", self.styleString)
-        self.forwardButton.clicked.connect(lambda: self.engine.goForward())
+        self.forwardButton.clicked.connect(lambda: self.engine1.goForward())
 
         self.menuButton = GPushButton("menu", self.styleString)
         self.menuButton.clicked.connect(lambda: self.openMenu())
@@ -75,28 +75,28 @@ class WebBrowser(QWidget):
         self.hBox.addWidget(self.menuButton)
 
 
-        self.engine = engine(self.database, self.urlBar)
-        self.engine.navigate(self.startUrl, True)
+        self.engine1 = engine(self.database, self.urlBar)
+        self.engine1.navigate(self.startUrl, True)
         self.urlBar.setText(self.startUrl)
-        self.engine.loadFinished.connect(self.engine.currentUrl)
+        self.engine1.loadFinished.connect(self.engine1.currentUrl)
 
         self.vBox.addLayout(self.hBox)
-        self.vBox.addWidget(self.engine)
+        self.vBox.addWidget(self.engine1)
 
         self.setLayout(self.vBox)
         self.show()
 
     def currentUrl(self):
-        url = self.engine.url().toString(QUrl.RemoveFragment)
-        title = self.engine.title()
+        url = self.engine1.url().toString(QUrl.RemoveFragment)
+        title = self.engine1.title()
         self.urlBar.setText(url)
         self.database.addHistory(url, title)
 
     def goBack(self):
-        self.engine.back()
+        self.engine1.back()
 
     def goForward(self):
-        self.engine.forward()
+        self.engine1.forward()
 
     def openMenu(self):
         menu = QMenu(self)
@@ -114,10 +114,10 @@ class WebBrowser(QWidget):
                 self.settings = settingsGUI(self.database)
                 self.settings.show()
             if action.text() == "Add Bookmark":
-                self.addBookmark = saveBookmarkGUI(self.database, self.engine)
+                self.addBookmark = saveBookmarkGUI(self.database, self.engine1)
                 self.addBookmark.show()
             if action.text() == "Bookmarks":
-                self.bookmarks = listBookmarkGUI(self.database, self.engine)
+                self.bookmarks = listBookmarkGUI(self.database, self.engine1)
                 self.bookmarks.show()
 
 class engine(QWebEngineView):
@@ -187,7 +187,6 @@ class UrlBarQLineEdit(QLineEdit):
 
     def focusInEvent(self, event):
         self.focus = True
-        self.selectAll()
         self.setStyleSheet(
             """ background-color: #9685a8;
             border-style: outset;
@@ -344,10 +343,13 @@ class bookMarkGuiButtons(QLineEdit):
         self.engine = engine
         self.setText(self.input)
         self.setReadOnly(True)
+        self.first = False
 
     def focusInEvent(self, event):
         event.ignore
-        self.engine.navigate(self.url, True)
+        if self.first:
+            self.engine.navigate(self.url, True)
+        self.first = True
 
     def mousePressEvent(self, event):
         if event.type() == QEvent.MouseButtonDblClick and event.button() == Qt.LeftButton:
