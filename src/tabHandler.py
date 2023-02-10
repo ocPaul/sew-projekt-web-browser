@@ -2,10 +2,10 @@ from PyQt5.QtCore import QSize
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence
 from PyQt5.QtWidgets import (QHBoxLayout, QLineEdit,
                              QMenu, QPushButton, QShortcut,
-                             QVBoxLayout)
-from engine import Engine
-from bookMarkGUI import ListBookmarkGUI, SaveBookmarkGUI
-from settingsGUI import SettingsGUI
+                             QVBoxLayout, QWidget)
+from .engine import Engine
+from .bookMarkGUI import ListBookmarkGUI, SaveBookmarkGUI
+from .settingsGUI import SettingsGUI
 
 
 class TabHandler(QVBoxLayout):
@@ -23,11 +23,30 @@ class TabHandler(QVBoxLayout):
         self.addTabButton.clicked.connect(lambda: self.addTab())
 
     def addTab(self):
-        self.tab = Tab(self.calledSelf)
-        self.tab.setup()
-        tabButton = TPushButton(self.tab, self.tabHolder, "Tab",
-                                self.calledSelf.styleString)
-        self.tabBar.addWidget(tabButton)
+        self.tab = QWidgetTab(Tab(self.calledSelf))
+        self.addTabButton.setVisible(False)
+        # # self.tab.setup()
+        # tabButton = TPushButton(self.tab, self, "Tab",
+        #                         self.calledSelf.styleString)
+        self.tabHolder.addWidget(self.tab)
+        # self.tabBar.addWidget(tabButton)
+
+    def switchTabs(self, tab):
+        currentTab = self.tabHolder.takeAt(0)
+        print(currentTab)
+        print(tab)
+        # if currentTab:
+            # currentTab.setVisible(False)
+        # self.tabHolder.insertLayout(0, tab)
+        # tab.setVisible(True)
+
+
+class QWidgetTab(QWidget):
+
+    def __init__(self, tab, *args, **kwargs):
+        super(QWidgetTab, self).__init__(*args, **kwargs)
+        tab.setup()
+        self.setLayout(tab)
 
 
 class Tab(QVBoxLayout):
@@ -77,6 +96,9 @@ class Tab(QVBoxLayout):
         self.addLayout(self.hBox)
         self.addWidget(self.engine)
         self.setContentsMargins(4, 4, 4, 4)
+
+    def getTabUrl(self):
+        return self.engine.currentUrl()
 
     def openMenu(self):
         menu = QMenu(self.calledSelf)
@@ -131,19 +153,22 @@ class GPushButton(QPushButton):
 
 
 class TPushButton(GPushButton):
-    def __init__(self, tab, tabHolder, *args, **kwargs):
+    def __init__(self, tab, seelfe, *args, **kwargs):
         super(TPushButton, self).__init__(*args, **kwargs)
         self.tab = tab
-        self.tabHolder = tabHolder
-        self.switchTabs()
+        self.seelfe = seelfe
+        # self.seelfe.switchTabs(self.tab)
         super().clicked.connect(self.switchTabs)
 
-    def switchTabs(self):
-        print("KJF")
+    def switchTabs1(self):
+        print(self.tab.getTabUrl())
         currentTab = self.tabHolder.takeAt(0)
         self.tabHolder.removeItem(currentTab)
-
         self.tabHolder.insertLayout(0, self.tab)
+
+    def switchTabs(self):
+        print("tswitchTabs")
+        self.seelfe.switchTabs(self.tab)
 
 
 class UrlBarQLineEdit(QLineEdit):

@@ -61,6 +61,7 @@ class SaveBookmarkGUI(QWidget):
         vBox.addLayout(hBox4)
         vBox.addWidget(self.saveButton)
 
+        vBox.setAlignment(Qt.AlignTop)
         self.setLayout(vBox)
 
     def saveData(self):
@@ -79,7 +80,6 @@ class ListBookmarkGUI(QWidget):
         self.setStyleSheet(styleString)
 
         self.engine = engine
-        self.database = database
         self.bookmarks = database.getBookmarks()
 
         self.setWindowTitle("Bookmarks")
@@ -134,8 +134,7 @@ class BookMarkGuiButtons(QLineEdit):
 
     def mousePressEvent(self, event):
         if (event.type() == QEvent.MouseButtonDblClick
-           and event.button() == Qt.LeftButton):
-            print("blibla")
+           and event.button() == Qt.LeftButton):  
             self.selectAll()
             self.setReadOnly(False)
         super().mousePressEvent(event)

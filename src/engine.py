@@ -35,3 +35,4 @@ class Engine(QWebEngineView):
         title = self.title()
         self.urlBar.setText(url)
         self.database.addHistory(url, title)
+        return url

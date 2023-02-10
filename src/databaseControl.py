@@ -2,13 +2,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import exists, func, text
 
-from datamodel import Base, Bookmark, Config, History
+from .datamodel import Base, Bookmark, Config, History
 
 
 class DataBaseControl:
 
-    def __init__(self):
-        self.engine = create_engine('sqlite:///webBrowser3.db')
+    def __init__(self, database):
+        self.engine = create_engine(database)
         Base.metadata.create_all(self.engine)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
@@ -44,8 +44,10 @@ class DataBaseControl:
         self.session.commit()
 
     def getBookmarks(self):
-        bookmarks = self.session.query(Bookmark).all()
-        return bookmarks
+        return self.session.query(Bookmark).all()
+
+    def getHistory(self):
+        return self.session.query(History).all()
 
     def getBookmarkTag(self, input):
         if self.session.query(exists().where(Bookmark.tag == input)).scalar():

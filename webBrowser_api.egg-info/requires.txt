@@ -1,0 +1,13 @@
+pydantic
+sqlalchemy
+union
+uvicorn
+websockets
+wheel
+autopep8
+doq
+fastapi
+flake8
+isort
+pytest
+rope
