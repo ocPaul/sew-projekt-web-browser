@@ -3,8 +3,7 @@ import pytest
 from src import DataBaseControl
 from sqlalchemy.sql import func
 
-  
-def test_inital():
+def test_inital_():
     assert 1 == 1
 
 
@@ -26,7 +25,7 @@ def test_addHistory():
 
     assert history[0].url == "juhui.com"
     assert history[0].title == "JUHUI"
-    # assert str(history[0].dateTime) == time gaxe
+    # assert str(history[0].dateTime) == time gaxe :D /:
 
 
 def test_changeStartUrl():
@@ -43,4 +42,4 @@ def test_change_Size():
 
     assert size.width == 25
     assert size.height == 52
-    assert size.fullscreen == False
+    assert size.fullscreen is False

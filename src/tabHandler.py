@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (QHBoxLayout, QLineEdit,
                              QVBoxLayout, QWidget)
 from .engine import Engine
 from .bookMarkGUI import ListBookmarkGUI, SaveBookmarkGUI
+from .historyGUI import ListHistoryGUI
 from .settingsGUI import SettingsGUI
 
 
@@ -104,8 +105,11 @@ class Tab(QVBoxLayout):
         menu = QMenu(self.calledSelf)
         menu.styleSheet()
         menu.addAction("Settings")
+        menu.addSeparator()
         menu.addAction("Add Bookmark")
         menu.addAction("Bookmarks")
+        menu.addSeparator()
+        menu.addAction("History")
         menu.addSeparator()
         menu.addAction("Exit")
         action = menu.exec_(QCursor.pos())
@@ -126,6 +130,11 @@ class Tab(QVBoxLayout):
                                                  self.engine,
                                                  self.calledSelf.styleString)
                 self.bookmarks.show()
+            if action.text() == "History":
+                self.history = ListHistoryGUI(self.calledSelf.database,
+                                                 self.engine,
+                                                 self.calledSelf.styleString)
+                self.history.show()
 
 
 class GPushButton(QPushButton):

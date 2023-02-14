@@ -134,7 +134,7 @@ class BookMarkGuiButtons(QLineEdit):
 
     def mousePressEvent(self, event):
         if (event.type() == QEvent.MouseButtonDblClick
-           and event.button() == Qt.LeftButton):  
+           and event.button() == Qt.LeftButton):
             self.selectAll()
             self.setReadOnly(False)
         super().mousePressEvent(event)
